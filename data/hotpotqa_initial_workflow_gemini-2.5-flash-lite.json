@@ -1,0 +1,285 @@
+{
+    "class_name": "WorkFlowGraph",
+    "goal": "\n# Task: Design a workflow for Multi-Hop Question Answering (HotPotQA) problem\n\n## Key Properties of HotPotQA\n- Questions require multi-hop reasoning: the answer depends on connecting facts from MULTIPLE context passages.\n- The answer should be a direct response to the question, without including explanations or reasoning.\n\n## Example\n- {\"_id\": \"5a7c49dc55429935c91b514f\", \"answer\": \"Engineering\", \"question\": \"The head of the Foreign Relations Department of the Rastriya Janashakti Party holds a degree that can be abbreviated MS, M.S., or ScM, in what field?\", \"supporting_facts\": [[\"Hari Bahadur Basnet\", 1], [\"Hari Bahadur Basnet\", 3], [\"Master of Science\", 0]], \"context\": [[\"Sikkim Janashakti Party\", [\"Sikkim Janashakti Party (translation: Sikkim People's Power Party), was a political party in the Indian state of Sikkim.\", \" SJP was founded in 1997, when Tara Man Rai broke away from Sikkim Ekta Manch.\", \" Rai was the president of SJP.\", \" In January 1999 SJP merged with Indian National Congress.\"]], [\"Master of Science\", [\"A Master of Science (Latin: \"Magister Scientiae\" ; abbreviated MS, M.S., MSc, M.Sc., MSci, M.Sci., ScM, Sc.M., SciM or Sci.M.)\", \" is a master's degree in the field of science awarded by universities in many countries, or a person holding such a degree.\", \" In contrast to the Master of Arts degree, the Master of Science degree is typically granted for studies in sciences, engineering, and medicine, and is usually for programs that are more focused on scientific and mathematical subjects; however, different universities have different conventions and may also offer the degree for fields typically considered within the humanities and social sciences.\", \" While it ultimately depends upon the specific program, earning a Master of Science degree typically includes writing a thesis.\"]], [\"Hari Bahadur Basnet\", [\"Hari Bahadur Basnet is a Nepalese politician.\", \" He is the head of the Foreign Relations Department of the Rastriya Janashakti Party.\", \" Basnet holds a M.Sc.\", \" in Engineering.\"]], [\"Gregory Weeks\", [\"Gregory Weeks (born 1970) is a lecturer at the International Relations Department at Webster University in Vienna, Austria.\", \" He was the Head of the International Relations Department from 2005 until 2011.\", \" Weeks teaches and researches civil-military relations, genocide prevention, and twentieth century Austrian and German diplomatic and military history.\"]], [\"Rastriya Janashakti Mahila Sangh\", [\"Rastriya Janashakti Mahila Sangh (Nepali: \u0930\u093e\u0937\u094d\u091f\u094d\u0930\u093f\u092f \u091c\u0928\u0936\u0915\u094d\u0924\u093f \u092e\u0939\u093f\u0932\u093e \u0938\u0902\u0918 ) is a women's organisation in Nepal, politically aligned with the Rastriya Janashakti Party.\"]], [\"Rastriya Janashakti Student Union\", [\"Rastriya Janashakti Student Union is a students organisation in Nepal.\", \" It is the students wing of the Royalist Rashtriya Janashakti Party.\"]], [\"Rastriya Janashakti Party\", [\"Rastriya Janashakti Party is a liberal political party in Nepal, led by former Prime Minister Surya Bahadur Thapa.\", \" Thapa had split away from the Rastriya Prajatantra Party in November 2004.\", \" The party is registered with the Election Commission of Nepal in March 2005.\"]], [\"Politics in the San Francisco Bay Area\", [\"Politics in the San Francisco Bay Area is widely regarded as one of the most liberal in the country.\", \" According to the California Secretary of State, the Democratic Party holds a voter registration advantage in every congressional district, state senate district, state assembly district, State Board of Equalization districts, all nine counties, and all but three of the 101 incorporated municipalities in the Bay Area.\", \" The Republican Party holds a voter registration advantage in one state assembly subdistrict (the portion of California's 4th State Assembly district in Solano county) and three cities, Atherton, Hillsborough, and Danville.\"]], [\"Foreign relations of Finland\", [\"The foreign relations of Finland are the responsibility of the President of Finland, who leads foreign policy in cooperation with the government.\", \" Implicitly the government is responsible for internal policy and decision making in the European Union.\", \" Within the government, preparative discussions are conducted in the government committee of foreign and security policy (\"ulko- ja turvallisuuspoliittinen ministerivaliokunta\"), which includes the Prime Minister and at least the Minister of Foreign Affairs and the Minister of Defence, and at most four other ministers as necessary.\", \" The committee meets with the President as necessary.\", \" Laws concerning foreign relations are discussed in the parliamentary committee of foreign relations (\"ulkoasiainvaliokunta, utrikesutskottet\").\", \" The Ministry of Foreign Affairs implements the foreign policy.\"]], [\"ITV (Thailand)\", [\"iTV was a television station in Thailand owned by ITV Public Company Limited, a unit of Shin Corporation.\", \" Thailand's first UHF channel, the station was started in 1995 when the company was granted a 30-year concession by the Office of the Permanent Secretary to the Prime Minister's Office to operate a free-to-air television station in the Ultra High Frequency (UHF) spectrum at 510-790 MHz (from Channel 26 to 60).\", \" After a lengthy dispute over unpaid concession fees to the Prime Minister's Office, iTV was taken in 2007 over by the government's Public Relations Department and its name was changed to Thai Independent Television (TITV).\", \" Following a previously unannounced order of Thailand's Public Relations Department delivered the same day, the station closed down operations at the crack of dawn on January 15th, 2008.\", \" In accordance with the Public Broadcasting Service Act, the channel's frequency was assigned to the Thai Public Broadcasting Service, or Thai PBS.\"]]], \"type\": \"bridge\", \"level\": \"hard\"}\n\n## Output Format Contract (the ONLY hard requirements; topology, node count, node names, and intermediate design are entirely up to the task planner)\n\nHotPotQA F1 is computed as token-overlap against a short gold entity (e.g. \"Engineering\", \"1994\"). The rules below concern ONLY how the FINAL answer string is produced and parsed \u2014 they do NOT restrict how you decompose the task. You may use any number of nodes and any intermediate structure you think is best, as long as the workflow's TERMINAL (sink) node satisfies every rule below.\n\n1. Terminal output parameter. The terminal node's `outputs` MUST contain EXACTLY ONE parameter whose `name` is exactly `answer` (lowercase), `type` is `string`, `required` is true. Whatever the upstream topology looks like, the sink MUST emit a field called `answer`.\n\n2. Parse mode. The terminal task spec in the planner JSON MUST set `\"parse_mode\": \"title\"`. The agent dict inside that task's `agents` list MUST ALSO set `\"parse_mode\": \"title\"`. This is how the runtime extracts the answer string from the LLM response.\n\n3. Single heading in the terminal prompt. The terminal node's `prompt` MUST use `## answer` as the ONLY `## <name>` markdown heading anywhere in that prompt. Do NOT include `## Thought`, `## reasoning`, `## explanation`, `## analysis`, or any other `## <name>` heading \u2014 extra headings break the `title` parser and produce empty/wrong `answer` values.\n\n4. No placeholder text under `## answer`. Inside the terminal prompt, nothing descriptive should appear under the `## answer` heading. Do NOT write things like \"The final answer extracted from the context.\" or \"<your answer here>\" on the line after `## answer`, because the LLM will copy such placeholder sentences verbatim into its response and destroy F1. Put all explanation and instruction ABOVE the Output Format block; after `## answer` leave either an empty line or only the short directive `<the 1-5 word verbatim answer, or yes/no>`.\n\n5. Answer content instruction (must appear verbatim in the terminal prompt). The terminal prompt MUST contain this sentence literally: `Extract the answer to the question as a minimal 1-5 word noun phrase copied VERBATIM from the Context paragraphs inside the goal. Do NOT paraphrase, explain, translate, add articles, add JSON, add markdown code fences, or prefix with 'The answer is'. If the answer is yes/no, output exactly yes or no.`\n\n6. Few-shot anchor in the terminal prompt. Immediately before the Output Format section, the terminal prompt MUST include this exact one-line anchor: `Example: if the gold answer is \"Engineering\", your entire response MUST be exactly two lines - \"## answer\" then \"Engineering\" - with no other text.`\n\n7. Intermediate-node freedom (explicitly allowed). You MAY add any intermediate nodes you think improve the workflow (evidence selection, reasoning, verification, ensemble, etc.). Their names, inputs, outputs, and prompts are entirely your call, and rules 3-6 apply ONLY to the terminal node (intermediate nodes may use any `## <name>` structure and any parse_mode that fits their job). If you use multiple nodes, ensure each downstream node's `inputs` list explicitly names every upstream output it actually consumes \u2014 otherwise the edge carries no data and the downstream node will see only the workflow's global inputs (e.g. `goal`).\n\n\n\n",
+    "nodes": [
+        {
+            "class_name": "WorkFlowNode",
+            "name": "question_and_context_analysis",
+            "description": "Analyze the user's goal to understand the question and identify potentially relevant context passages.",
+            "inputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "goal",
+                    "type": "string",
+                    "description": "The user's goal, containing the question and context for HotPotQA.",
+                    "required": true
+                }
+            ],
+            "outputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "question",
+                    "type": "string",
+                    "description": "The question from the HotPotQA goal.",
+                    "required": true
+                },
+                {
+                    "class_name": "Parameter",
+                    "name": "relevant_passages",
+                    "type": "list[string]",
+                    "description": "A list of context passages that are most likely to contain information relevant to answering the question.",
+                    "required": true
+                }
+            ],
+            "reason": "This step frames the problem, isolates the core question, and pre-filters context to reduce noise for subsequent steps.",
+            "agents": [
+                {
+                    "name": "question_and_context_analysis_fallback_agent",
+                    "description": "Fallback agent for node question_and_context_analysis (auto-filled because no agent was generated).",
+                    "inputs": [
+                        {
+                            "name": "goal",
+                            "type": "string",
+                            "description": "The user's goal, containing the question and context for HotPotQA.",
+                            "required": true
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "name": "question",
+                            "type": "string",
+                            "description": "The question from the HotPotQA goal.",
+                            "required": true
+                        },
+                        {
+                            "name": "relevant_passages",
+                            "type": "list[string]",
+                            "description": "A list of context passages that are most likely to contain information relevant to answering the question.",
+                            "required": true
+                        }
+                    ],
+                    "prompt": "### Objective\nAnalyze the user's goal to understand the question and identify potentially relevant context passages.\n\n### Instructions\n1. Read the inputs listed in the '### Inputs' section below.\n2. Follow EVERY rule in the '### Domain-Specific Guidance' section below step-by-step. Those rules are the authoritative specification for this node and override any generic habits.\n3. Ground every decision ONLY in the provided inputs; never invent facts or use external knowledge.\n4. Keep the output minimal and directly usable by downstream nodes \u2014 no preamble, no explanation, no markdown, no JSON wrapping unless the output format explicitly requires it.\n\n### Domain-Specific Guidance\n- HotPotQA evidence extraction: (1) Read all context passages. (2) Select ONLY 2-5 verbatim sentences that directly support the multi-hop chain implied by the question intent. (3) Exclude distractor sentences, summaries, and paraphrases. (4) Prefer sentences that together form a logical bridge to the answer. Output a list of exact quoted sentences, NOT summaries.\n\n### Inputs\n- {goal} (string): The user's goal, containing the question and context for HotPotQA.\n\n### Output Format\nYour final output MUST follow this exact two-section template and contain no other markdown headings:\n\n## question\n<the value for `question`>\n\n\n# Contract Rules (verbatim from goal)\n- Extract the answer to the question as a minimal 1-5 word noun phrase copied VERBATIM from the Context paragraphs inside the goal. Do NOT paraphrase, explain, translate, add articles, add JSON, add markdown code fences, or prefix with 'The answer is'. If the answer is yes/no, output exactly yes or no.\n- Example: if the gold answer is \"Engineering\", your entire response MUST be exactly two lines - \"## answer\" then \"Engineering\" - with no other text.",
+                    "parse_mode": "title"
+                }
+            ],
+            "status": "pending"
+        },
+        {
+            "class_name": "WorkFlowNode",
+            "name": "evidence_extraction_and_connection",
+            "description": "Extract key entities, facts, and relationships from relevant passages that can form a reasoning chain for the question.",
+            "inputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "question",
+                    "type": "string",
+                    "description": "The question from the HotPotQA goal, used to guide evidence extraction.",
+                    "required": true
+                },
+                {
+                    "class_name": "Parameter",
+                    "name": "relevant_passages",
+                    "type": "list[string]",
+                    "description": "Context passages identified as potentially relevant to the question.",
+                    "required": true
+                }
+            ],
+            "outputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "evidence_chain_candidates",
+                    "type": "list[string]",
+                    "description": "Structured pieces of evidence and their connections that could form the basis of a multi-hop answer.",
+                    "required": true
+                }
+            ],
+            "reason": "This step bridges the gap between raw passages and the logical steps needed for multi-hop reasoning by identifying connectable pieces of evidence.",
+            "agents": [
+                {
+                    "name": "hotpotqa_evidence_extractor",
+                    "description": "Extracts 2-5 verbatim sentences from provided passages that directly support multi-hop reasoning for a given HotPotQA question, adhering to strict selection criteria.",
+                    "inputs": [
+                        {
+                            "name": "question",
+                            "type": "string",
+                            "description": "The question from the HotPotQA goal, used to guide evidence extraction.",
+                            "required": true
+                        },
+                        {
+                            "name": "relevant_passages",
+                            "type": "list[string]",
+                            "description": "Context passages identified as potentially relevant to the question.",
+                            "required": true
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "name": "evidence_chain_candidates",
+                            "type": "list[string]",
+                            "description": "Structured pieces of evidence and their connections that could form the basis of a multi-hop answer.",
+                            "required": true
+                        }
+                    ],
+                    "prompt": "### Objective\nExtract verbatim sentences from the provided context passages that are crucial for answering the given HotPotQA question, following specific evidence selection rules for multi-hop reasoning.\n\n### Instructions\n1. Carefully read the provided `question`: <input>{question}</input>.\n2. Thoroughly review all passages within the `relevant_passages` input: <input>{relevant_passages}</input>.\n3. For each passage, identify sentences that directly contribute to a multi-hop reasoning chain implied by the question's intent.\n4. Apply the following HotPotQA evidence extraction guidelines strictly:\n    a. Select ONLY 2-5 verbatim sentences that directly support the multi-hop chain implied by the question intent. Do not select more or fewer sentences unless absolutely necessary and well-justified by the context.\n    b. Exclude any sentences that are distractor information, summaries of information, or paraphrases of content. The output must be direct quotes.\n    c. Prioritize sentences that, when taken together, form a logical bridge that connects different pieces of information to lead to the answer.\n5. Compile these selected verbatim sentences into a list.\n6. Ensure that your extraction relies SOLELY on the provided `question` and `relevant_passages`. Do not use external knowledge or parametric memory. The goal is to find supporting evidence within the given text.\n\n### Output Format\nYour final output should ALWAYS in the following format:\n\n## Thought\nBriefly explain the reasoning process for selecting the evidence sentences.\n\n## evidence_chain_candidates\nProvide a list of the verbatim sentences selected as evidence."
+                }
+            ],
+            "status": "pending"
+        },
+        {
+            "class_name": "WorkFlowNode",
+            "name": "multi_hop_reasoning_and_answer_extraction",
+            "description": "Perform multi-hop reasoning by connecting the evidence chain candidates to derive the answer, and extract it as a raw string.",
+            "inputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "question",
+                    "type": "string",
+                    "description": "The question from the HotPotQA goal, providing context for reasoning.",
+                    "required": true
+                },
+                {
+                    "class_name": "Parameter",
+                    "name": "evidence_chain_candidates",
+                    "type": "list[string]",
+                    "description": "Extracted evidence snippets and their connections to be used for reasoning.",
+                    "required": true
+                }
+            ],
+            "outputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "extracted_answer_text",
+                    "type": "string",
+                    "description": "The direct answer derived from reasoning, not yet strictly formatted.",
+                    "required": true
+                }
+            ],
+            "reason": "This step executes the core logical inference required by HotPotQA and produces a direct answer candidate before final formatting.",
+            "agents": [
+                {
+                    "name": "strict_output_formatting",
+                    "description": "Format the extracted answer text precisely according to the HotPotQA output contract.",
+                    "inputs": [
+                        {
+                            "name": "question",
+                            "type": "string",
+                            "description": "The original question from the goal, needed to construct the output prompt.",
+                            "required": true
+                        },
+                        {
+                            "name": "extracted_answer_text",
+                            "type": "string",
+                            "description": "The answer derived from reasoning, to be formatted.",
+                            "required": true
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "name": "answer",
+                            "type": "string",
+                            "description": "The final answer, formatted exactly as required by the HotPotQA output contract.",
+                            "required": true
+                        }
+                    ],
+                    "prompt": "### Objective\nFormat the provided extracted answer text to strictly adhere to the HotPotQA output contract, ensuring it's a minimal, verbatim noun phrase with no extraneous information.\n\n### Instructions\n1. Carefully review the original question: <input>{question}</input>\n2. Examine the extracted answer text: <input>{extracted_answer_text}</input>\n3. Apply the HotPotQA answer formatting rules:\n    a. Identify the LAST clause or conclusion in the reasoning chain that directly answers the question.\n    b. Extract ONLY the minimal noun phrase (1-5 words) \u2013 the named entity, date, or key term.\n    c. Strip ALL articles (a, an, the), adjectives, verbs, and punctuation from the answer.\n    d. Ensure the output is a bare phrase with no explanation, no JSON, and no markdown.\n    e. Do NOT paraphrase, explain, translate, or add any prefix like 'The answer is'.\n4. If the answer is a simple yes/no, output exactly 'yes' or 'no'.\n5. Use ONLY the provided inputs and do not rely on external knowledge or parametric memory.\n6. Ensure the final output is ready for parsing according to the 'title' parse mode.\n\n### Output Format\nYour final output should ALWAYS in the following format:\n\n## Thought\nBriefly explain the reasoning process for formatting the extracted answer.\n\n## answer\n<the 1-5 word verbatim answer, or yes/no>"
+                }
+            ],
+            "status": "pending"
+        },
+        {
+            "class_name": "WorkFlowNode",
+            "name": "strict_output_formatting",
+            "description": "Format the extracted answer text precisely according to the HotPotQA output contract.",
+            "inputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "question",
+                    "type": "string",
+                    "description": "The original question from the goal, needed to construct the output prompt.",
+                    "required": true
+                },
+                {
+                    "class_name": "Parameter",
+                    "name": "extracted_answer_text",
+                    "type": "string",
+                    "description": "The answer derived from reasoning, to be formatted.",
+                    "required": true
+                }
+            ],
+            "outputs": [
+                {
+                    "class_name": "Parameter",
+                    "name": "answer",
+                    "type": "string",
+                    "description": "The final answer, formatted exactly as required by the HotPotQA output contract.",
+                    "required": true
+                }
+            ],
+            "reason": "This node ensures the final output adheres to the strict requirements of the HotPotQA evaluation metric (verbatim, minimal format, specific headings).",
+            "agents": [
+                {
+                    "name": "hotpotqa_formatter_agent",
+                    "description": "Formats the extracted answer text to precisely meet the HotPotQA output contract, ensuring verbatim, minimal noun phrase extraction.",
+                    "inputs": [
+                        {
+                            "name": "question",
+                            "type": "string",
+                            "description": "The original question from the goal, needed to construct the output prompt.",
+                            "required": true
+                        },
+                        {
+                            "name": "extracted_answer_text",
+                            "type": "string",
+                            "description": "The answer derived from reasoning, to be formatted.",
+                            "required": true
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "name": "answer",
+                            "type": "string",
+                            "description": "The final answer, formatted exactly as required by the HotPotQA output contract.",
+                            "required": true
+                        }
+                    ],
+                    "prompt": "### Objective\nFormat the provided `extracted_answer_text` into a strict HotPotQA output format using the context from the `question`.\n\n### Instructions\n1. Understand the user's `question`: <input>{question}</input>.\n2. Review the `extracted_answer_text`: <input>{extracted_answer_text}</input>.\n3. Your primary objective is to format this `extracted_answer_text` precisely according to the HotPotQA output contract.\n4. The final output from this agent MUST contain ONLY a `## answer` heading. No other markdown headings or introductory text should precede or follow this `## answer` section.\n5. **Crucially**, use the `extracted_answer_text` as the basis for your final answer, ensuring it adheres to the following verbatim instruction: `Extract the answer to the question as a minimal 1-5 word noun phrase copied VERBATIM from the Context paragraphs inside the goal. Do NOT paraphrase, explain, translate, add articles, add JSON, add markdown code fences, or prefix with 'The answer is'. If the answer is yes/no, output exactly yes or no.`\n6. Ensure the output adheres to the specified format, including the verbatim anchor: `Example: if the gold answer is \"Engineering\", your entire response MUST be exactly two lines - \"## answer\" then \"Engineering\" - with no other text.`\n7. Ensure that the `extracted_answer_text` is correctly extracted and minimally formatted as a noun phrase (1-5 words).\n\n### Output Format\n\n## answer\nExtract the answer to the question as a minimal 1-5 word noun phrase copied VERBATIM from the Context paragraphs inside the goal. Do NOT paraphrase, explain, translate, add articles, add JSON, add markdown code fences, or prefix with 'The answer is'. If the answer is yes/no, output exactly yes or no.\nExample: if the gold answer is \"Engineering\", your entire response MUST be exactly two lines - \"## answer\" then \"Engineering\" - with no other text.",
+                    "parse_mode": "title"
+                }
+            ],
+            "status": "pending"
+        }
+    ],
+    "edges": [
+        {
+            "class_name": "WorkFlowEdge",
+            "source": "question_and_context_analysis",
+            "target": "evidence_extraction_and_connection",
+            "priority": 0
+        },
+        {
+            "class_name": "WorkFlowEdge",
+            "source": "question_and_context_analysis",
+            "target": "multi_hop_reasoning_and_answer_extraction",
+            "priority": 0
+        },
+        {
+            "class_name": "WorkFlowEdge",
+            "source": "evidence_extraction_and_connection",
+            "target": "multi_hop_reasoning_and_answer_extraction",
+            "priority": 0
+        },
+        {
+            "class_name": "WorkFlowEdge",
+            "source": "question_and_context_analysis",
+            "target": "strict_output_formatting",
+            "priority": 0
+        },
+        {
+            "class_name": "WorkFlowEdge",
+            "source": "multi_hop_reasoning_and_answer_extraction",
+            "target": "strict_output_formatting",
+            "priority": 0
+        }
+    ],
+    "graph": null
+}
