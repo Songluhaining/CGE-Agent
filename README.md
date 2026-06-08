@@ -3,9 +3,7 @@
 Official code for our paper on **self-evolving LLM agentic workflows**.
 Starting from a task goal, CGE-Agent builds an initial multi-agent workflow and
 iteratively evolves it, guided by causal root-cause analysis over execution
-traces. Built on top of [EvoAgentX](https://github.com/EvoAgentX/EvoAgentX).
-
-> Paper: *<TODO: title / authors / venue>*
+traces.
 
 ## Installation
 
